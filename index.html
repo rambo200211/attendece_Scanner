@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>පැදුර Attendance</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-top:     #FFE8CF;
+      --bg-bottom:  #FDEEDC;
+      --surface:    #FFFFFF;
+      --line:       #F0E4D6;
+      --text:       #3A2E22;
+      --muted:      #8A7A68;
+
+      --in:         #FF8A3D;
+      --in-dark:    #C2560F;
+      --out:        #2EC4B6;
+      --out-dark:   #0E7A70;
+
+      --success-bg: #E3F8E9;
+      --success-fg: #1E8449;
+      --success-ln: #A9E8BC;
+
+      --warning-bg: #FFF4D6;
+      --warning-fg: #9A6B00;
+      --warning-ln: #FBE29B;
+
+      --error-bg:   #FDE4E1;
+      --error-fg:   #C0392B;
+      --error-ln:   #F6B7AE;
+
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; overscroll-behavior: none; }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 55%);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      padding: calc(var(--safe-top) + 20px) 16px calc(var(--safe-bottom) + 28px);
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .header { text-align: center; margin-bottom: 18px; }
+    .eyebrow { font-size: 1rem; font-weight: 600; color: var(--in-dark); margin: 0 0 4px; }
+    h1 { font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 1.55rem; line-height: 1.3; margin: 0; color: var(--text); }
+
+    .mode-toggle {
+      display: flex;
+      background: var(--surface);
+      border: 2px solid var(--line);
+      border-radius: 20px;
+      padding: 6px;
+      margin-bottom: 18px;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(58, 46, 34, 0.08);
+    }
+
+    .mode-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: 'Baloo 2', sans-serif;
+      font-weight: 700;
+      font-size: 1.15rem;
+      padding: 18px 8px;
+      min-height: 60px;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+      touch-action: manipulation;
+    }
+    .mode-btn:active { transform: scale(0.97); }
+    .mode-btn[data-mode="IN"].selected { background: var(--in); color: #FFFFFF; box-shadow: 0 4px 10px rgba(255, 138, 61, 0.45); }
+    .mode-btn[data-mode="OUT"].selected { background: var(--out); color: #FFFFFF; box-shadow: 0 4px 10px rgba(46, 196, 182, 0.45); }
+
+    .scanner-frame {
+      position: relative;
+      width: 100%;
+      border-radius: 26px;
+      overflow: hidden;
+      background: #000;
+      box-shadow: 0 12px 28px rgba(58, 46, 34, 0.22);
+      border: 4px solid var(--surface);
+      flex: 0 0 auto;
+    }
+
+    .scanner-frame::before {
+      content: "";
+      position: absolute;
+      inset: 10%;
+      border-radius: 20px;
+      pointer-events: none;
+      z-index: 5;
+      background:
+        linear-gradient(var(--reticle-color, var(--in)), var(--reticle-color, var(--in))) top left / 30px 5px no-repeat,
+        linear-gradient(var(--reticle-color, var(--in)), var(--reticle-color, var(--in))) top left / 5px 30px no-repeat,
+        linear-gradient(var(--reticle-color, var(--in)), var(--reticle-color, var(--in))) top right / 30px 5px no-repeat,
+        linear-gradient(var(--reticle-color, var(--in)), var(--reticle-color, var(--in))) top right / 5px 30px no-repeat,
+        linear-gradient(var(--reticle-color, var(--in)), var(--reticle-color, var(--in))) bottom left / 30px 5px no-repeat,
+        linear-gradient(var(--reticle-color, var(--in)), var(--reticle-color, var(--in))) bottom left / 5px 30px no-repeat,
+        linear-gradient(var(--reticle-color, var(--in)), var(--reticle-color, var(--in))) bottom right / 30px 5px no-repeat,
+        linear-gradient(var(--reticle-color, var(--in)), var(--reticle-color, var(--in))) bottom right / 5px 30px no-repeat;
+      opacity: 0.95;
+    }
+
+    #reader { width: 100% !important; border: none !important; }
+    #reader video { width: 100% !important; max-height: 58dvh; object-fit: cover; }
+    #reader__scan_region { background: #000 !important; }
+    #reader__dashboard { background: var(--surface) !important; color: var(--muted) !important; padding: 12px !important; }
+    #reader__dashboard select, #reader__dashboard button {
+      background: #FFF4E8 !important;
+      color: var(--text) !important;
+      border: 2px solid var(--line) !important;
+      border-radius: 12px !important;
+      padding: 12px 16px !important;
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
+      font-size: 1rem !important;
+      min-height: 48px;
+    }
+    #reader__status_span { background: transparent !important; color: var(--muted) !important; }
+    #reader__camera_permission_button {
+      background: var(--in) !important;
+      color: #FFFFFF !important;
+      border: none !important;
+      border-radius: 14px !important;
+      padding: 16px 22px !important;
+      font-weight: 700 !important;
+      font-size: 1.05rem !important;
+      min-height: 52px;
+      cursor: pointer;
+    }
+
+    /* ---------- Result Card ---------- */
+    .result-card {
+      margin-top: 16px;
+      border-radius: 20px;
+      border: 2px solid var(--line);
+      background: var(--surface);
+      padding: 20px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      box-shadow: 0 4px 14px rgba(58, 46, 34, 0.08);
+    }
+    .result-icon {
+      flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; font-weight: 700; background: #FFF4E8; color: var(--in-dark);
+    }
+    .result-text { font-size: 1.08rem; font-weight: 500; line-height: 1.6; white-space: pre-wrap; color: var(--text); margin: 4px 0 0; word-break: break-word; }
+
+    .result-card.status-success { background: var(--success-bg); border-color: var(--success-ln); }
+    .result-card.status-success .result-icon { background: #FFFFFF; color: var(--success-fg); }
+    .result-card.status-success .result-text { color: var(--success-fg); font-weight: 600; }
+
+    .result-card.status-warning { background: var(--warning-bg); border-color: var(--warning-ln); }
+    .result-card.status-warning .result-icon { background: #FFFFFF; color: var(--warning-fg); }
+    .result-card.status-warning .result-text { color: var(--warning-fg); font-weight: 600; }
+
+    .result-card.status-error { background: var(--error-bg); border-color: var(--error-ln); }
+    .result-card.status-error .result-icon { background: #FFFFFF; color: var(--error-fg); }
+    .result-card.status-error .result-text { color: var(--error-fg); font-weight: 600; }
+
+    /* ---------- Attendance Stats Display ---------- */
+    .stats-container {
+      display: flex;
+      flex-direction: column;
+      margin-top: 16px;
+      background: var(--surface);
+      border-radius: 18px;
+      border: 2px solid var(--line);
+      padding: 6px 16px;
+      box-shadow: 0 4px 12px rgba(58, 46, 34, 0.06);
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-label {
+      font-size: 1.02rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .stat-value {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--in-dark);
+    }
+
+    /* ---------- Date Selector & Reset Section ---------- */
+    .action-container {
+      margin-top: 16px;
+      background: var(--surface);
+      border-radius: 18px;
+      border: 2px solid var(--line);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 4px 12px rgba(58, 46, 34, 0.06);
+    }
+
+    .date-picker-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .date-picker-group label {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .custom-date-input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 2px solid var(--line);
+      background: #FFF4E8;
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      outline: none;
+    }
+
+    .custom-date-input:focus {
+      border-color: var(--in);
+    }
+
+    .action-btn {
+      width: 100%;
+      background: var(--in);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-family: 'Baloo 2', sans-serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(255, 138, 61, 0.3);
+      transition: background-color 0.2s ease, transform 0.1s ease;
+      touch-action: manipulation;
+    }
+
+    .action-btn:active {
+      transform: scale(0.98);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <p class="eyebrow">පැදුර attendance</p>
+    <h1>Scan a badge to check in or out</h1>
+  </div>
+
+  <div class="mode-toggle" id="modeSelector">
+    <button id="checkInBtn" class="mode-btn selected" data-mode="IN">🟠 Check in</button>
+    <button id="checkOutBtn" class="mode-btn" data-mode="OUT">🟢 Check out</button>
+  </div>
+
+  <div class="scanner-frame">
+    <div id="reader"></div>
+  </div>
+
+  <!-- Result Message Card -->
+  <div class="result-card status-idle" id="resultCard">
+    <div class="result-icon" id="resultIcon">👋</div>
+    <p class="result-text" id="resultMessage">Point the camera at a QR code to begin.</p>
+  </div>
+
+  <!-- Stats Display (Situated below the scanner result card) -->
+  <div class="stats-container">
+    <div class="stat-row">
+      <span class="stat-label">Total Attendance</span>
+      <span class="stat-value" id="valTotal">--</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">OC Attendance</span>
+      <span class="stat-value" id="valOC">--</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Number of Check Outs</span>
+      <span class="stat-value" id="valCheckOuts">--</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Still Stays</span>
+      <span class="stat-value" id="valStillStays">--</span>
+    </div>
+  </div>
+
+  <!-- Date Selection & Archiving Action -->
+  <div class="action-container">
+    <div class="date-picker-group">
+      <label for="attendanceDate">Select Date to Archive:</label>
+      <input type="date" id="attendanceDate" class="custom-date-input">
+    </div>
+    <button id="submitActionBtn" class="action-btn">Archive & Reset Sheet</button>
+  </div>
+
+  <script>
+    // ⚠️ PASTE YOUR DEPLOYED APPS SCRIPT WEB APP URL HERE (/exec link)
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzRZuO20n7WTlj-Of1AhfizD7XuC6ME_LG1oO-QhW11ALiE_D6jMyUmCT7QC4szOcr6/exec
+";
+
+    let currentScanMode = 'IN';
+
+    const scannerFrame  = document.querySelector('.scanner-frame');
+    const resultCard    = document.getElementById('resultCard');
+    const resultIcon    = document.getElementById('resultIcon');
+    const resultMessage = document.getElementById('resultMessage');
+
+    const ICONS = { idle: '👋', pending: '⏳', success: '✅', warning: '⚠️', error: '❌' };
+
+    function setResult(status, text) {
+      resultCard.className = 'result-card status-' + status;
+      resultIcon.textContent = ICONS[status] || ICONS.idle;
+      resultMessage.textContent = text;
+    }
+
+    function initializeModeSelector() {
+      const inBtn = document.getElementById('checkInBtn');
+      const outBtn = document.getElementById('checkOutBtn');
+      const buttons = [inBtn, outBtn];
+
+      buttons.forEach(btn => {
+        btn.addEventListener('click', function () {
+          currentScanMode = this.getAttribute('data-mode');
+          buttons.forEach(b => b.classList.remove('selected'));
+          this.classList.add('selected');
+          scannerFrame.style.setProperty('--reticle-color', currentScanMode === 'IN' ? 'var(--in)' : 'var(--out)');
+          setResult('idle', 'Ready to scan for ' + (currentScanMode === 'IN' ? 'check-in' : 'check-out') + '.');
+        });
+      });
+    }
+
+    async function onScanSuccess(decodedText) {
+      html5QrcodeScanner.pause();
+      setResult('pending', 'Looking up ' + decodedText + ' …');
+
+      try {
+        const url = APPS_SCRIPT_URL + '?action=scan&qrData=' + encodeURIComponent(decodedText) + '&scanMode=' + encodeURIComponent(currentScanMode);
+        
+        const response = await fetch(url, { redirect: 'follow' });
+        const res = await response.json();
+        
+        setResult(res.status, res.message);
+
+        // Dynamic updates for the 4 stat display values
+        if (res.totalCount !== undefined) document.getElementById('valTotal').textContent = res.totalCount;
+        if (res.ocCount !== undefined) document.getElementById('valOC').textContent = res.ocCount;
+        if (res.checkOuts !== undefined) document.getElementById('valCheckOuts').textContent = res.checkOuts;
+        if (res.stillStays !== undefined) document.getElementById('valStillStays').textContent = res.stillStays;
+
+      } catch (err) {
+        setResult('error', "Couldn't reach the server. Verify your APPS_SCRIPT_URL.");
+      } finally {
+        setTimeout(() => html5QrcodeScanner.resume(), 2000);
+      }
+    }
+
+    function computeQrBoxSize() {
+      const edge = Math.min(window.innerWidth, window.innerHeight);
+      const size = Math.floor(edge * 0.72);
+      return Math.max(220, Math.min(size, 340));
+    }
+
+    var html5QrcodeScanner = new Html5QrcodeScanner(
+      "reader",
+      {
+        fps: 10,
+        qrbox: { width: computeQrBoxSize(), height: computeQrBoxSize() },
+        videoConstraints: { facingMode: "environment" }
+      },
+      false
+    );
+
+    html5QrcodeScanner.render(onScanSuccess, function(err){});
+    initializeModeSelector();
+
+    // Default the date picker to today's date
+    document.getElementById('attendanceDate').valueAsDate = new Date();
+
+    // Event handler for archiving and resetting attendance
+    document.getElementById('submitActionBtn').addEventListener('click', async function() {
+      const selectedDate = document.getElementById('attendanceDate').value;
+
+      if (!selectedDate) {
+        alert('Please select a date first!');
+        return;
+      }
+
+      if (!confirm('Are you sure you want to archive data for ' + selectedDate + ' and reset all Check-IN and Check-OUT values?')) {
+        return;
+      }
+
+      setResult('pending', 'Archiving data for ' + selectedDate + ' …');
+
+      try {
+        const url = APPS_SCRIPT_URL + '?action=archiveDate&selectedDate=' + encodeURIComponent(selectedDate);
+        const response = await fetch(url, { redirect: 'follow' });
+        const res = await response.json();
+
+        setResult(res.status, res.message);
+
+        // Reset UI Stat Counter Displays
+        document.getElementById('valTotal').textContent = '0';
+        document.getElementById('valOC').textContent = '0';
+        document.getElementById('valCheckOuts').textContent = '0';
+        document.getElementById('valStillStays').textContent = '0';
+
+      } catch (err) {
+        setResult('error', 'Failed to archive data: ' + err.message);
+      }
+    });
+  </script>
+</body>
+</html>
