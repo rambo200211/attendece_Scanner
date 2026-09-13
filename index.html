@@ -93,6 +93,7 @@
     .mode-btn[data-mode="IN"].selected { background: var(--in); color: #FFFFFF; box-shadow: 0 4px 10px rgba(255, 138, 61, 0.45); }
     .mode-btn[data-mode="OUT"].selected { background: var(--out); color: #FFFFFF; box-shadow: 0 4px 10px rgba(46, 196, 182, 0.45); }
 
+    /* ---------- CAMERA SCANNER FRAME ---------- */
     .scanner-frame {
       position: relative;
       width: 100%;
@@ -293,6 +294,7 @@
     <button id="checkOutBtn" class="mode-btn" data-mode="OUT">🟢 Check out</button>
   </div>
 
+  <!-- QR SCANNER CONTAINER -->
   <div class="scanner-frame">
     <div id="reader"></div>
   </div>
@@ -303,7 +305,7 @@
     <p class="result-text" id="resultMessage">Point the camera at a QR code to begin.</p>
   </div>
 
-  <!-- Stats Display (Situated below the scanner result card) -->
+  <!-- Stats Display (Situated below result card) -->
   <div class="stats-container">
     <div class="stat-row">
       <span class="stat-label">Total Attendance</span>
@@ -334,8 +336,7 @@
 
   <script>
     // ⚠️ PASTE YOUR DEPLOYED APPS SCRIPT WEB APP URL HERE (/exec link)
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzRZuO20n7WTlj-Of1AhfizD7XuC6ME_LG1oO-QhW11ALiE_D6jMyUmCT7QC4szOcr6/exec
-";
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxZhI6K5H54QXBfabc6pLIZn7ZJl46PY1_KIuaq_gCIMVsN_RYgFBlj1TVBwZ1c2PZY/exec";
 
     let currentScanMode = 'IN';
 
